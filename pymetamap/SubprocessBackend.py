@@ -32,7 +32,10 @@ class SubprocessBackend(MetaMap):
                          unique_acronym_variants=False,
                          prefer_multiple_concepts=False,
                          ignore_stop_phrases=False, compute_all_mappings=False,
-                         mm_data_version=False):
+                         mm_data_version=False, max_prune=None,
+						 exclude_sources=None, restrict_sources=None,
+						 restrict_sts=None, exclude_sts=None,
+						 dir_temp=None):
         """ extract_concepts takes a list of sentences and ids(optional)
             then returns a list of Concept objects extracted via
             MetaMap.
@@ -50,6 +53,12 @@ class SubprocessBackend(MetaMap):
                 Ignore Stop Phrases -K
                 Compute All Mappings -b
                 MM Data Version -V
+				Added by soares-f:
+					Prune candidates (integer) --prune
+					Exclude UMLS sources -e
+					Restrict to UMLS sources -R
+					Restrict to semantic types -J
+					Exlude semantic types -k
 
             For information about the available options visit
             http://metamap.nlm.nih.gov/.
@@ -57,6 +66,7 @@ class SubprocessBackend(MetaMap):
             Note: If an error is encountered the process will be closed
                   and whatever was processed, if anything, will be
                   returned along with the error found.
+
         """
         if allow_acronym_variants and unique_acronym_variants:
             raise ValueError("You can't use both allow_acronym_variants and "
@@ -69,11 +79,18 @@ class SubprocessBackend(MetaMap):
             raise ValueError("file_format must be either sldi or sldiID")
 
         input_file = None
+		#added option to write in an specified temporary dir - good for RAMdisk
         if sentences is not None:
-            input_file = tempfile.NamedTemporaryFile(mode="wb", delete=False)
+			if dir_temp is not None:
+				input_file = tempfile.NamedTemporaryFile(mode="wb", delete=False, dir=dir_temp)
+			else:
+				input_file = tempfile.NamedTemporaryFile(mode="wb", delete=False)
         else:
             input_file = open(filename, 'r')
-        output_file = tempfile.NamedTemporaryFile(mode="r", delete=False)
+		if dir_temp is not None:
+			output_file = tempfile.NamedTemporaryFile(mode="r", delete=False, dir=dir_temp)
+		else:
+			output_file = tempfile.NamedTemporaryFile(mode="r", delete=False)
         error = None
         try:
             if sentences is not None:
@@ -118,9 +135,24 @@ class SubprocessBackend(MetaMap):
                 command.append('--sldiID')
             else:
                 command.append('--sldi')
-            command.append(input_file.name)
+			# added by soares-f
+			if exclude_sources is not None:
+				string_sources = ','.join(exclude_sources)
+				command.append('-e '+string_sources)
+			if restrict_sources is not None:
+				string_res_sources = ','.join(restrict_sources)
+				command.append('-R '+string_res_sources)
+			if exclude_sts is not None:
+				string_sts = ','.join(exclude_sts)
+				command.append('-k '+string_sts)
+			if restrict_sts is not None:
+				string_res_sts = ','.join(restrict_sts)
+				command.append('-J '+string_res_sts)
+			if max_prune is not None:
+				command.append('--prune '+str(max_prune))
+			# end added
+			command.append(input_file.name)
             command.append(output_file.name)
-
             metamap_process = subprocess.Popen(command, stdout=subprocess.PIPE)
             while metamap_process.poll() is None:
                 stdout = str(metamap_process.stdout.readline())
