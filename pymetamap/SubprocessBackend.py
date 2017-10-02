@@ -87,10 +87,12 @@ class SubprocessBackend(MetaMap):
                 input_file = tempfile.NamedTemporaryFile(mode="wb", delete=False)
         else:
             input_file = open(filename, 'r')
-            if dir_temp is not None:
-                output_file = tempfile.NamedTemporaryFile(mode="r", delete=False, dir=dir_temp)
-            else:
-                output_file = tempfile.NamedTemporaryFile(mode="r", delete=False)
+
+        if dir_temp is not None:
+            output_file = tempfile.NamedTemporaryFile(mode="r", delete=False, dir=dir_temp)
+        else:
+            output_file = tempfile.NamedTemporaryFile(mode="r", delete=False)
+
         error = None
         try:
             if sentences is not None:
