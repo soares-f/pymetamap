@@ -154,11 +154,16 @@ class SubprocessBackend(MetaMap):
             command.append(input_file.name)
             command.append(output_file.name)
             metamap_process = subprocess.Popen(command, stdout=subprocess.PIPE)
-            while metamap_process.poll() is None:
-                stdout = str(metamap_process.stdout.readline())
-                if 'ERROR' in stdout:
-                    metamap_process.terminate()
-                    error = stdout.rstrip()
+            out1, err1 = metamap_process.communicate()
+            if 'ERROR' in str(out1):
+                metamap_process.terminate()
+                error = out1.rstrip()
+
+            # while metamap_process.poll() is None:
+            #     stdout = str(metamap_process.stdout.readline())
+            #     if 'ERROR' in stdout:
+            #         metamap_process.terminate()
+            #         error = stdout.rstrip()
             output = str(output_file.read())
         finally:
             if sentences is not None:
