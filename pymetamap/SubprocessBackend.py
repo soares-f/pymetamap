@@ -35,7 +35,7 @@ class SubprocessBackend(MetaMap):
                          mm_data_version=False, max_prune=None,
                          exclude_sources=None, restrict_sources=None,
                          restrict_sts=None, exclude_sts=None,
-                         dir_temp=None):
+                         dir_temp=None, addit_string=None):
         """ extract_concepts takes a list of sentences and ids(optional)
             then returns a list of Concept objects extracted via
             MetaMap.
@@ -87,10 +87,12 @@ class SubprocessBackend(MetaMap):
                 input_file = tempfile.NamedTemporaryFile(mode="wb", delete=False)
         else:
             input_file = open(filename, 'r')
-            if dir_temp is not None:
-                output_file = tempfile.NamedTemporaryFile(mode="r", delete=False, dir=dir_temp)
-            else:
-                output_file = tempfile.NamedTemporaryFile(mode="r", delete=False)
+
+        if dir_temp is not None:
+            output_file = tempfile.NamedTemporaryFile(mode="r", delete=False, dir=dir_temp)
+        else:
+            output_file = tempfile.NamedTemporaryFile(mode="r", delete=False)
+
         error = None
         try:
             if sentences is not None:
@@ -150,6 +152,8 @@ class SubprocessBackend(MetaMap):
                 command.append('-J ' + string_res_sts)
             if max_prune is not None:
                 command.append('--prune ' + str(max_prune))
+            if addit_string is not None:
+                command.append(addit_string)
             # end added
             command.append(input_file.name)
             command.append(output_file.name)
